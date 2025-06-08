@@ -2,12 +2,14 @@ import { Request, Response } from 'express';
 import { UserRepositoryImpl } from '../../db/user/UserRepositoryImpl';
 import { RegisterUser } from '../../../application/use_cases/user/RegisterUser';
 import { LoginUser } from '../../../application/use_cases/user/LoginUser';
+import { RedisCacheService } from "../../cache/RedisCacheService";
 
+const cacheService = new RedisCacheService();
 const userRepository = new UserRepositoryImpl();
 
 export const register = async (req: Request, res: Response) => {
     const { email, password } = req.body;
-    const useCase = new RegisterUser(userRepository);
+    const useCase = new RegisterUser(userRepository, cacheService);
     try {
         const token = await useCase.execute(email, password);
         res.status(201).json({ token });
@@ -22,7 +24,7 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
     const { email, password } = req.body;
-    const useCase = new LoginUser(userRepository);
+    const useCase = new LoginUser(userRepository, cacheService);
     try {
         const token = await useCase.execute(email, password);
         res.status(200).json({ token });
