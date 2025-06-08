@@ -5,4 +5,6 @@ export interface INote {
     text: string;
     isDone?: boolean;
     userId: Types.ObjectId;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
