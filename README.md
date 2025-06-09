@@ -45,21 +45,23 @@ Server will start at `http://localhost:PORT`
 
 ### Auth
 
-| Method | Endpoint              | Description         |
-| ------ |-----------------------| ------------------- |
-| POST   | /api/v1/auth/register | Register new user   |
-| POST   | /api/v1/auth/login    | Login existing user |
+| Method | Endpoint                | Description         | Request Body                                               | Response Example                |
+| ------ | ----------------------- | ------------------- |------------------------------------------------------------|---------------------------------|
+| POST   | `/api/v1/auth/register` | Register new user   | `{ "email": "user@example.com", "password": "secret123" }` | `{ "token": "jwt_token_here" }` |
+| POST   | `/api/v1/auth/login`    | Login existing user | `{ "email": "user@example.com", "password": "secret123" }` | `{ "token": "jwt_token_here" }` |
+
 
 ### Notes
 
 All `/note` routes require a Bearer token in the `Authorization` header.
 
-| Method | Endpoint            | Description        |
-| ------ | ------------------- | ------------------ |
-| POST   | /api/v1/note/create | Create a new note  |
-| GET    | /api/v1/note/list   | List notes by user |
-| PUT    | /api/v1/note/update | Update a note      |
-| DELETE | /api/v1/note/delete | Delete a note      |
+| Method | Endpoint              | Description        | Request Body                                                   | Response Example                                                                               |
+| ------ | --------------------- | ------------------ |----------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| POST   | `/api/v1/note/create` | Create a new note  | `{ "text": "Buy groceries" }`                                  | `{ "note": { "_id": "123", "text": "Buy groceries", "isDone": false, "userId": "123" } }`      |
+| PUT    | `/api/v1/note/update` | Update a note      | `{ "noteId": "123", "text": "Buy groceries", "isDone": true }` | `{ "note": { "_id": "123", "text": "Buy groceries", "isDone": true, "userId": "123" } }`       |
+| DELETE | `/api/v1/note/delete` | Delete a note      | `{ "noteId": "123" }`                                          | `{ "note": { "_id": "123", "text": "Buy groceries", "isDone": false, "userId": "123" } }`      |
+| GET    | `/api/v1/note/list`   | List notes by user | *None* (uses token for user ID)                                | `{ "notes": [ { "_id": "123", "text": "Buy groceries", "isDone": false, "userId": "123" } ] }` |
+
 
 ---
 
