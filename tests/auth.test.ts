@@ -5,6 +5,17 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 
 let mongoServer: MongoMemoryServer;
 
+jest.mock('../src/infrastructure/cache/RedisCacheService', () => {
+    return {
+        RedisCacheService: jest.fn().mockImplementation(() => ({
+            set: jest.fn(),
+            get: jest.fn().mockResolvedValue(null),
+            delete: jest.fn()
+        }))
+    };
+});
+
+
 beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();

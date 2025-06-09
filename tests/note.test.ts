@@ -7,6 +7,16 @@ import {INote} from "../src/domain/models/Note";
 let mongoServer: MongoMemoryServer;
 let token: string;
 
+jest.mock('../src/infrastructure/cache/RedisCacheService', () => {
+    return {
+        RedisCacheService: jest.fn().mockImplementation(() => ({
+            set: jest.fn(),
+            get: jest.fn().mockResolvedValue(null),
+            delete: jest.fn()
+        }))
+    };
+});
+
 beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const uri = mongoServer.getUri();
@@ -32,6 +42,40 @@ afterAll(async () => {
 });
 
 describe('Note Routes', () => {
+    it('should list all notes from authenticadet user', async () => {
+        const notesNumber = 5;
+        const notes: INote[] = [];
+        for (let i = 0; i < notesNumber; i++) {
+            const res = await request(app)
+                .post('/api/v1/note/create')
+                .set('Authorization', `Bearer ${token}`)
+                .send({
+                    text: 'My first note' + i,
+                    isDone: false,
+                });
+
+            expect(res.statusCode).toBe(201);
+            notes.push(res.body.note);
+        }
+
+        const res = await request(app)
+            .get('/api/v1/note/list')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toBe(200);
+
+        const responseNotes: INote[] = res.body.notes
+        expect(responseNotes.length).toBe(notesNumber);
+
+        notes.forEach((createdNote) => {
+            const match = responseNotes.find((note) => note._id === createdNote._id);
+            expect(match).toBeDefined();
+            expect(match?.text).toBe(createdNote.text);
+            expect(match?.isDone).toBe(createdNote.isDone);
+            expect(match?.userId).toBe(createdNote.userId);
+        });
+    });
+
     it('should create a note for authenticated user', async () => {
         const res = await request(app)
             .post('/api/v1/note/create')
@@ -105,39 +149,5 @@ describe('Note Routes', () => {
 
         expect(deletedNote.statusCode).toBe(200);
         expect(res.body).toHaveProperty('note._id', res.body.note._id);
-    });
-
-    it('should list all notes from authenticadet user', async () => {
-        const notesNumber = 5;
-        const notes: INote[] = [];
-        for (let i = 0; i < notesNumber; i++) {
-            const res = await request(app)
-                .post('/api/v1/note/create')
-                .set('Authorization', `Bearer ${token}`)
-                .send({
-                    text: 'My first note' + i,
-                    isDone: false,
-                });
-
-            expect(res.statusCode).toBe(201);
-            notes.push(res.body.note);
-        }
-
-        const res = await request(app)
-            .get('/api/v1/note/list')
-            .set('Authorization', `Bearer ${token}`);
-
-        expect(res.statusCode).toBe(200);
-
-        const responseNotes: INote[] = res.body.notes
-        expect(responseNotes.length).toBe(notesNumber);
-
-        notes.forEach((createdNote) => {
-            const match = responseNotes.find((note) => note._id === createdNote._id);
-            expect(match).toBeDefined();
-            expect(match?.text).toBe(createdNote.text);
-            expect(match?.isDone).toBe(createdNote.isDone);
-            expect(match?.userId).toBe(createdNote.userId);
-        });
     });
 });
